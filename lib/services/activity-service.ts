@@ -177,4 +177,4 @@ export async function getActivityBySlug(slug: string): Promise<Activity | null> 
     console.error("Error fetching activity by slug:", error);
     return null;
   }
-}git a
+}
