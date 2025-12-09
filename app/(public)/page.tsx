@@ -4,13 +4,18 @@ import QuickAccess from "@/components/home/QuickAccess";
 import ScheduleSection from "@/components/home/ScheduleSection";
 import DocumentationSection from "@/components/home/DocumentationSection";
 import { getPublishedActivities } from "@/lib/services/activity-service"; // Import Fetcher
+import { getUpcomingSchedules } from "@/lib/services/schedule-service";
 
 
 // Ubah menjadi async function agar bisa fetch data di server
 export default async function Home() {
-  // Fetch 3 kegiatan terbaru yang statusnya published
-  const latestActivities = await getPublishedActivities(3);
-
+  
+  // Fetch paralel: Aktivitas & Jadwal
+  const [latestActivities, upcomingEvents] = await Promise.all([
+    getPublishedActivities(3),
+    getUpcomingSchedules(5) // Ambil 5 agenda terdekat
+  ]);
+  
   return (
     <main className="min-h-screen bg-slate-50">
       
@@ -51,7 +56,7 @@ export default async function Home() {
       </section>
 
       <QuickAccess />
-      <ScheduleSection />
+      <ScheduleSection events={upcomingEvents}/>
       <DocumentationSection />
 
     </main>
