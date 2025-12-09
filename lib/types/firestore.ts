@@ -16,16 +16,22 @@ export interface UserProfile {
 
 // 2. ACTIVITY / NEWS (Untuk Homepage)
 export interface Activity {
-  id: string;
-  title: string;
-  slug: string; // Untuk URL detail (misal: kerja-bakti-agustus)
-  excerpt: string; // Deskripsi singkat untuk card
-  content: string; // Isi lengkap (HTML/Markdown)
-  mainImage: string; // URL gambar utama
-  gallery?: string[]; // Array URL gambar dokumentasi tambahan
-  date: number; // Timestamp kegiatan
-  authorId: string; // Siapa pengurus yang posting
-  isFeatured: boolean; // Agar bisa ditag untuk tampil di atas
+    id: string;
+    title: string;
+    slug: string; // Untuk URL detail (misal: kerja-bakti-agustus)
+    excerpt: string; // Deskripsi singkat untuk card
+    content: string; // Isi lengkap (HTML/Markdown)
+    mainImage: string; // URL gambar utama
+    gallery?: string[]; // Array URL gambar dokumentasi tambahan
+    date: number; // Timestamp kegiatan'
+    location?: string; // Lokasi kegiatan
+    author?: {
+        uid: string;
+        displayName: string;
+    }; // Siapa pengurus yang posting
+    status?: "draft" | "published"; // Status publikasi
+    isFeatured: boolean; // Agar bisa ditag untuk tampil di atas
+    createdAt: number; // Timestamp pembuatan
 }
 
 // 3. PAYMENT / IURAN (Persiapan fitur bayar)
