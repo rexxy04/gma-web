@@ -2,8 +2,8 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-// 1. Import Provider dan Modal
 import { UIProvider } from "@/lib/context/UIContext";
+import { AuthProvider } from "@/lib/context/AuthContext";
 import LoginModal from "@/components/auth/LoginModal";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -21,14 +21,13 @@ export default function RootLayout({
   return (
     <html lang="id" className="scroll-smooth">
       <body className={inter.className}>
-        {/* 2. BUNGKUS SELURUH APLIKASI DI SINI */}
-        <UIProvider>
-          {/* Konten halaman (termasuk Navbar di dalam public layout) akan dirender di sini */}
-          {children}
-          
-          {/* Login Modal ditaruh di sini agar bisa muncul di atas semua halaman */}
-          <LoginModal />
-        </UIProvider>
+        {/* AuthProvider membungkus segalanya agar session user tersedia global */}
+        <AuthProvider>
+          <UIProvider>
+            {children}
+            <LoginModal />
+          </UIProvider>
+        </AuthProvider>
       </body>
     </html>
   );
