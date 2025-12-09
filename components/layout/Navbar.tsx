@@ -3,10 +3,12 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { Menu, X, Home } from "lucide-react"; 
+import { useRouter } from "next/navigation"; 
+import { Menu, X, Home, LogOut, User as UserIcon, LayoutDashboard } from "lucide-react"; 
 import { cn } from "@/lib/utils";
-import Button from "@/components/ui/Button"; // Import Button Reusable
-import { useUI } from "@/lib/context/UIContext"; // Import Context
+import Button from "@/components/ui/Button";
+import { useUI } from "@/lib/context/UIContext";
+import { useAuth } from "@/lib/context/AuthContext";
 
 const navItems = [
   { name: "Aktivitas Warga", href: "#aktivitas" },
@@ -17,11 +19,13 @@ const navItems = [
 ];
 
 export default function Navbar() {
-  // FIX: Ambil fungsi openLoginModal dari Context
-  const { openLoginModal } = useUI(); 
+  const { openLoginModal } = useUI();
+  const { user, logout } = useAuth(); // Ambil data user
+  const router = useRouter();
 
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false); // Dropdown profil
 
   // Efek scroll glassmorphism
   useEffect(() => {
@@ -31,6 +35,13 @@ export default function Navbar() {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  const handleLogout = async () => {
+    await logout();
+    router.refresh(); // Refresh agar UI balik ke mode tamu
+    setIsProfileOpen(false); // Tutup dropdown
+    setIsMobileMenuOpen(false); // Tutup mobile menu
+  };
 
   return (
     <nav
@@ -42,6 +53,7 @@ export default function Navbar() {
       )}
     >
       <div className="container mx-auto px-4 md:px-8 flex items-center justify-between">
+        
         {/* LOGO */}
         <Link 
           href="/" 
@@ -72,21 +84,64 @@ export default function Navbar() {
           ))}
         </div>
 
-        {/* LOGIN BUTTON (DESKTOP) - Menggunakan Reusable Button */}
+        {/* AUTH BUTTONS AREA (DESKTOP) */}
         <div className="hidden md:block">
-            <Button 
-                onClick={openLoginModal}
-                size="sm"
-                // Logic styling: Jika discroll pakai style primary biasa, 
-                // jika di atas (transparent bg) pakai style putih/ghost agar kontras
-                className={cn(
-                    isScrolled 
-                        ? "bg-blue-600 text-white hover:bg-blue-700" 
-                        : "bg-white text-blue-900 hover:bg-gray-100"
-                )}
-            >
-                Login Pengurus
-            </Button>
+            {user ? (
+                // JIKA SUDAH LOGIN
+                <div className="relative">
+                    <button 
+                        onClick={() => setIsProfileOpen(!isProfileOpen)}
+                        className={cn(
+                            "flex items-center gap-2 px-3 py-1.5 rounded-full transition-all border",
+                            isScrolled 
+                                ? "bg-white border-slate-200 text-slate-700 hover:bg-slate-50" 
+                                : "bg-white/10 border-white/20 text-white hover:bg-white/20 backdrop-blur-sm"
+                        )}
+                    >
+                        <UserIcon size={16} />
+                        <span className="text-sm font-medium max-w-[100px] truncate">
+                            {user.displayName || "Warga"}
+                        </span>
+                    </button>
+
+                    {/* Dropdown Menu */}
+                    {isProfileOpen && (
+                        <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-100 py-1 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                            {/* Jika Admin, tampilkan link ke Dashboard */}
+                            {user.role === 'admin' && (
+                                <Link 
+                                    href="/dashboard"
+                                    className="flex items-center gap-2 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 hover:text-blue-600"
+                                >
+                                    <LayoutDashboard size={16} />
+                                    Dashboard Admin
+                                </Link>
+                            )}
+                            
+                            <button 
+                                onClick={handleLogout}
+                                className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50"
+                            >
+                                <LogOut size={16} />
+                                Keluar
+                            </button>
+                        </div>
+                    )}
+                </div>
+            ) : (
+                // JIKA BELUM LOGIN (Tamu)
+                <Button 
+                    onClick={openLoginModal}
+                    size="sm"
+                    className={cn(
+                        isScrolled 
+                            ? "bg-blue-600 text-white hover:bg-blue-700" 
+                            : "bg-white text-blue-900 hover:bg-gray-100"
+                    )}
+                >
+                    Login Masuk
+                </Button>
+            )}
         </div>
 
         {/* MOBILE MENU TOGGLE */}
@@ -116,16 +171,31 @@ export default function Navbar() {
             </Link>
           ))}
           
-          {/* Tombol Login Mobile */}
-          <Button
-            onClick={() => {
-                setIsMobileMenuOpen(false);
-                openLoginModal();
-            }}
-            className="w-full"
-          >
-            Login Pengurus
-          </Button>
+          {/* Auth Section Mobile */}
+          <div className="pt-4 border-t border-gray-100 mt-2">
+            {user ? (
+                 <div className="space-y-2">
+                    <div className="flex items-center gap-2 px-2 text-slate-500 text-sm mb-2">
+                        <UserIcon size={16} />
+                        Halo, <span className="font-semibold text-slate-800">{user.displayName}</span>
+                    </div>
+                    {user.role === 'admin' && (
+                        <Link href="/dashboard">
+                            <Button className="w-full mb-2" variant="outline" onClick={() => setIsMobileMenuOpen(false)}>
+                                Ke Dashboard
+                            </Button>
+                        </Link>
+                    )}
+                    <Button onClick={handleLogout} className="w-full" variant="danger">
+                        Keluar
+                    </Button>
+                 </div>
+            ) : (
+                <Button onClick={() => { setIsMobileMenuOpen(false); openLoginModal(); }} className="w-full">
+                    Login Masuk
+                </Button>
+            )}
+          </div>
         </div>
       )}
     </nav>
