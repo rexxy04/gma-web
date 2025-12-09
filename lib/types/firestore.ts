@@ -31,6 +31,7 @@ export interface Activity {
     }; // Siapa pengurus yang posting
     status?: "draft" | "published"; // Status publikasi
     isFeatured: boolean; // Agar bisa ditag untuk tampil di atas
+    createdAt: number; // Timestamp pembuatan
 }
 
 // 3. PAYMENT / IURAN (Persiapan fitur bayar)
