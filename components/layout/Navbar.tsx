@@ -11,10 +11,10 @@ import { useUI } from "@/lib/context/UIContext";
 import { useAuth } from "@/lib/context/AuthContext";
 
 const navItems = [
-  { name: "Aktivitas Warga", href: "#aktivitas" },
-  { name: "Menu Cepat", href: "#menu-cepat" },
-  { name: "Jadwal Kegiatan", href: "#jadwal" },
-  { name: "Dokumentasi", href: "#dokumentasi" },
+  { name: "Aktivitas Warga", href: "/aktivitas" },
+  { name: "Menu Cepat", href: "/#menu-cepat" },
+  { name: "Jadwal Kegiatan", href: "/#jadwal" },
+  { name: "Dokumentasi", href: "/#dokumentasi" },
   { name: "Kepengurusan", href: "#kepengurusan" },
 ];
 
