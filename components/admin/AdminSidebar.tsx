@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { 
   LayoutDashboard, 
   Users, 
@@ -64,7 +64,25 @@ interface AdminSidebarProps {
 
 export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
   const pathname = usePathname(); // Untuk cek URL aktif
+  const router = useRouter();
   const { logout } = useAuth();
+
+
+    const handleLogout = async () => {
+    try {
+      await logout();
+      router.replace("/"); // Redirect ke Homepage (replace agar tidak bisa di-back)
+    } catch (error) {
+      console.error("Gagal logout:", error);
+    }
+  };
+
+
+
+
+
+
+
 
   return (
     <>
@@ -127,7 +145,7 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
           {/* LOGOUT BUTTON (Di Bawah) */}
           <div className="pt-4 border-t border-slate-800 mt-auto">
              <button 
-                onClick={() => logout()}
+                onClick={handleLogout}
                 className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-red-400 hover:bg-red-900/20 hover:text-red-300 transition-colors"
              >
                 <LogOut size={18} />
@@ -139,3 +157,4 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
     </>
   );
 }
+
