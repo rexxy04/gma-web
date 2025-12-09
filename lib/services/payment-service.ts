@@ -12,6 +12,8 @@ import {
 } from "firebase/firestore";
 import { db } from "@/lib/firebase/firebase";
 import { Payment, PaymentStatus } from "@/lib/types/firestore";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { storage } from "@/lib/firebase/firebase";
 
 const COLLECTION_NAME = "payments";
 
@@ -101,6 +103,45 @@ export async function createManualPayment(data: {
     });
   } catch (error) {
     console.error("Error creating manual payment:", error);
+    throw error;
+  }
+}
+
+/**
+ * SUBMIT PEMBAYARAN OLEH WARGA
+ * 1. Upload Bukti ke Storage
+ * 2. Simpan Data ke Firestore (Pending)
+ */
+export async function submitResidentPayment(
+  file: File, 
+  data: {
+    userId: string;
+    amount: number;
+    month: number;
+    year: number;
+  }
+) {
+  try {
+    // 1. Upload File
+    // Path: payments/{userId}/{timestamp}_{filename}
+    const fileRef = ref(storage, `payments/${data.userId}/${Date.now()}_${file.name}`);
+    const snapshot = await uploadBytes(fileRef, file);
+    const downloadUrl = await getDownloadURL(snapshot.ref);
+
+    // 2. Simpan Dokumen
+    await addDoc(collection(db, COLLECTION_NAME), {
+      userId: data.userId,
+      amount: data.amount,
+      month: data.month,
+      year: data.year,
+      status: "pending", // Default pending agar dicek admin
+      paymentMethod: "transfer_manual",
+      proofUrl: downloadUrl, // URL gambar dari storage
+      createdAt: Date.now(),
+    });
+
+  } catch (error) {
+    console.error("Error submitting payment:", error);
     throw error;
   }
 }
