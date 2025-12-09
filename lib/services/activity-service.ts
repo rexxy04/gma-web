@@ -11,6 +11,7 @@ import {
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { db, storage } from "@/lib/firebase/firebase";
 import { Activity } from "@/lib/types/firestore";
+import { limit, startAfter } from "firebase/firestore";
 
 const COLLECTION = "activities";
 
@@ -124,3 +125,56 @@ export async function deleteActivity(id: string) {
     throw error;
   }
 }
+
+/**
+ * PUBLIC: AMBIL AKTIVITAS YANG PUBLISHED SAJA
+ * Optional: limitCount untuk membatasi jumlah (misal untuk Homepage cuma butuh 3)
+ */
+export async function getPublishedActivities(limitCount?: number): Promise<Activity[]> {
+  try {
+    let q = query(
+      collection(db, COLLECTION), 
+      where("status", "==", "published"), // Hanya yang published
+      orderBy("date", "desc") // Urutkan dari yang terbaru
+    );
+
+    if (limitCount) {
+      q = query(q, limit(limitCount));
+    }
+
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    } as Activity));
+  } catch (error) {
+    console.error("Error fetching published activities:", error);
+    return [];
+  }
+}
+
+/**
+ * PUBLIC: AMBIL SATU AKTIVITAS BERDASARKAN SLUG
+ */
+export async function getActivityBySlug(slug: string): Promise<Activity | null> {
+  try {
+    const q = query(
+      collection(db, COLLECTION), 
+      where("slug", "==", slug),
+      limit(1)
+    );
+    
+    const snapshot = await getDocs(q);
+    
+    if (snapshot.empty) return null;
+
+    const doc = snapshot.docs[0];
+    return {
+      id: doc.id,
+      ...doc.data()
+    } as Activity;
+  } catch (error) {
+    console.error("Error fetching activity by slug:", error);
+    return null;
+  }
+}git a
