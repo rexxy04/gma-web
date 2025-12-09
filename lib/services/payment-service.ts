@@ -145,3 +145,25 @@ export async function submitResidentPayment(
     throw error;
   }
 }
+
+/**
+ * WARGA: AMBIL RIWAYAT PEMBAYARAN SENDIRI
+ */
+export async function getUserPayments(userId: string): Promise<Payment[]> {
+  try {
+    const q = query(
+      collection(db, COLLECTION_NAME),
+      where("userId", "==", userId),
+      orderBy("createdAt", "desc") // Urutkan dari yang terbaru
+    );
+    
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    } as Payment));
+  } catch (error) {
+    console.error("Error fetching user payments:", error);
+    return [];
+  }
+}

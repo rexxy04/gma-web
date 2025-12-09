@@ -107,16 +107,16 @@ export default function Navbar() {
                     {/* Dropdown Menu */}
                     {isProfileOpen && (
                         <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-100 py-1 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                            {/* Jika Admin, tampilkan link ke Dashboard */}
-                            {user.role === 'admin' && (
-                                <Link 
-                                    href="/dashboard"
-                                    className="flex items-center gap-2 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 hover:text-blue-600"
-                                >
-                                    <LayoutDashboard size={16} />
-                                    Dashboard Admin
-                                </Link>
-                            )}
+                            
+                            {/* LOGIC LINK DASHBOARD */}
+                            <Link 
+                                href={user.role === 'admin' ? "/dashboard" : "/warga"} // <--- UPDATE INI
+                                className="flex items-center gap-2 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 hover:text-blue-600"
+                                onClick={() => setIsProfileOpen(false)}
+                            >
+                                <LayoutDashboard size={16} />
+                                {user.role === 'admin' ? "Dashboard Admin" : "Dashboard Saya"} {/* <--- UPDATE LABEL */}
+                            </Link>
                             
                             <button 
                                 onClick={handleLogout}
@@ -179,13 +179,23 @@ export default function Navbar() {
                         <UserIcon size={16} />
                         Halo, <span className="font-semibold text-slate-800">{user.displayName}</span>
                     </div>
-                    {user.role === 'admin' && (
+
+
+                    {user.role === 'admin' ? (
                         <Link href="/dashboard">
                             <Button className="w-full mb-2" variant="outline" onClick={() => setIsMobileMenuOpen(false)}>
                                 Ke Dashboard
                             </Button>
                         </Link>
+                    ) : (
+                        <Link href="/warga"> {/* <--- Link Warga */}
+                            <Button className="w-full mb-2" variant="outline" onClick={() => setIsMobileMenuOpen(false)}>
+                                Dashboard Saya
+                            </Button>
+                        </Link>
                     )}
+
+
                     <Button onClick={handleLogout} className="w-full" variant="danger">
                         Keluar
                     </Button>
