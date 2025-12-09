@@ -1,9 +1,30 @@
 "use client";
 
+import { useState } from "react"; // Tambah state
 import { Wallet, Megaphone, ArrowRight } from "lucide-react";
 import Button from "@/components/ui/Button";
+import PayDuesModal from "@/components/home/PayDuesModal";
+import { useAuth } from "@/lib/context/AuthContext";
+import { useUI } from "@/lib/context/UIContext";
 
 export default function QuickAccess() {
+
+    const { user } = useAuth();
+    const { openLoginModal } = useUI();
+    const [isPayModalOpen, setIsPayModalOpen] = useState(false);
+
+    // Logic Klik Tombol Bayar
+    const handlePayClick = () => {
+        if (!user) {
+        // Jika belum login, suruh login dulu
+        alert("Silakan login sebagai Warga terlebih dahulu.");
+        openLoginModal();
+        } else {
+        // Jika sudah login, buka form bayar
+        setIsPayModalOpen(true);
+        }
+    };
+
   return (
     <section id="menu-cepat" className="py-20 bg-white border-y border-slate-100">
       <div className="container mx-auto px-4">
@@ -39,8 +60,14 @@ export default function QuickAccess() {
                         Cek tagihan bulanan (kebersihan & keamanan) dan lakukan pembayaran digital dengan mudah, aman, dan tercatat otomatis.
                     </p>
                     
-                    <Button variant="primary" size="lg" className="w-full sm:w-auto group-hover:pl-8 transition-all">
-                        Bayar Sekarang <ArrowRight size={18} className="ml-2 group-hover:translate-x-1 transition-transform" />
+                    {/* BUTTON BAYAR: Update onClick */}
+                    <Button 
+                        onClick={handlePayClick}
+                        variant="primary" 
+                        size="lg" 
+                        className="..."
+                    >
+                        Bayar Sekarang <ArrowRight size={18} className="..." />
                     </Button>
                 </div>
             </div>
@@ -72,9 +99,15 @@ export default function QuickAccess() {
                     </Button>
                 </div>
             </div>
-
         </div>
       </div>
+
+    {/* RENDER MODAL DI SINI */}
+        <PayDuesModal 
+            isOpen={isPayModalOpen} 
+            onClose={() => setIsPayModalOpen(false)} 
+        />
+    
     </section>
   );
 }
