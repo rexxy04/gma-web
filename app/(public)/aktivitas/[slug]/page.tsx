@@ -6,6 +6,7 @@ import Button from "@/components/ui/Button";
 import ActivityGallery from "@/components/ui/ActivityGallery"; 
 import { getActivityBySlug } from "@/lib/services/activity-service"; // Import Fetcher Asli
 
+
 // HAPUS function dummy getActivityBySlug yang lama
 
 export default async function ActivityDetailPage({ params }: { params: Promise<{ slug: string }> }) {

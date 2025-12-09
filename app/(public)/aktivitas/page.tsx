@@ -1,6 +1,7 @@
 import ActivityCard from "@/components/home/ActivityCard";
 import { getPublishedActivities } from "@/lib/services/activity-service";
 
+
 export default async function ActivitiesPage() {
   // Fetch SEMUA kegiatan yang published (tanpa limit)
   const allActivities = await getPublishedActivities();

@@ -5,6 +5,7 @@ import ScheduleSection from "@/components/home/ScheduleSection";
 import DocumentationSection from "@/components/home/DocumentationSection";
 import { getPublishedActivities } from "@/lib/services/activity-service"; // Import Fetcher
 
+
 // Ubah menjadi async function agar bisa fetch data di server
 export default async function Home() {
   // Fetch 3 kegiatan terbaru yang statusnya published
