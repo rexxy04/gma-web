@@ -16,16 +16,22 @@ export interface UserProfile {
 
 // 2. ACTIVITY / NEWS (Untuk Homepage)
 export interface Activity {
-  id: string;
-  title: string;
-  slug: string; // Untuk URL detail (misal: kerja-bakti-agustus)
-  excerpt: string; // Deskripsi singkat untuk card
-  content: string; // Isi lengkap (HTML/Markdown)
-  mainImage: string; // URL gambar utama
-  gallery?: string[]; // Array URL gambar dokumentasi tambahan
-  date: number; // Timestamp kegiatan
-  authorId: string; // Siapa pengurus yang posting
-  isFeatured: boolean; // Agar bisa ditag untuk tampil di atas
+    id: string;
+    title: string;
+    slug: string; // Untuk URL detail (misal: kerja-bakti-agustus)
+    excerpt: string; // Deskripsi singkat untuk card
+    content: string; // Isi lengkap (HTML/Markdown)
+    mainImage: string; // URL gambar utama
+    gallery?: string[]; // Array URL gambar dokumentasi tambahan
+    date: number; // Timestamp kegiatan'
+    location?: string; // Lokasi kegiatan
+    author?: {
+        uid: string;
+        displayName: string;
+    }; // Siapa pengurus yang posting
+    status?: "draft" | "published"; // Status publikasi
+    isFeatured: boolean; // Agar bisa ditag untuk tampil di atas
+    createdAt: number; // Timestamp pembuatan
 }
 
 // 3. PAYMENT / IURAN (Persiapan fitur bayar)
@@ -54,4 +60,38 @@ export interface EventSchedule {
   endTime?: string;  // misal: "12:00 WIB"
   location: string;
   category: "rapat" | "kerja-bakti" | "sosial" | "keamanan"; // Untuk color coding badge
+}
+
+// 5. GALLERY ITEM (Untuk Marquee Homepage)
+export interface GalleryItem {
+  id: string;
+  url: string;        // URL download dari Firebase Storage
+  storagePath: string; // Path di storage (penting untuk hapus file nanti)
+  createdAt: number;
+}
+
+// 6. COMPLAINT / ADUAN
+export type ComplaintStatus = "pending" | "processing" | "done" | "rejected";
+
+export interface Complaint {
+  id: string;
+  userId: string;         // Siapa yang lapor
+  title: string;          // Judul Laporan (misal: Lampu Jalan Mati)
+  description: string;    // Detail
+  imageUrl?: string;      // Foto bukti (opsional)
+  status: ComplaintStatus;
+  response?: string;      // Balasan dari Admin (misal: "Sudah diperbaiki")
+  createdAt: number;
+  updatedAt?: number;
+}
+
+// 7. EXPENSE / PENGELUARAN
+export interface Expense {
+  id: string;
+  title: string;      // Keperluan (misal: "Bayar Listrik Pos")
+  amount: number;     // Nominal
+  date: number;       // Tanggal pengeluaran
+  category: string;   // Operasional, Sosial, Pembangunan, dll
+  recordedBy: string; // Admin yang mencatat
+  createdAt: number;
 }

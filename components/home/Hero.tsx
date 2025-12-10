@@ -82,7 +82,7 @@ export default function Hero() {
                 size="lg"
                 className="w-full sm:w-auto"
             >
-                Login Pengurus
+                Login Warga
             </Button>
           </motion.div>
         </motion.div>

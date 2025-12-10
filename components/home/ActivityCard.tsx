@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { Calendar, ArrowRight, User } from "lucide-react";
-// UPDATE PATH: Sesuai instruksi user (types ada di dalam lib)
+import Link from "next/link"; // Pastikan ini terimport
 import { Activity } from "@/lib/types/firestore"; 
 import { cn } from "@/lib/utils";
 import Button from "@/components/ui/Button";
@@ -10,7 +10,7 @@ import Button from "@/components/ui/Button";
 interface ActivityCardProps {
   activity: Activity;
   className?: string;
-  isHorizontal?: boolean; // Prop baru untuk mode horizontal
+  isHorizontal?: boolean;
 }
 
 export default function ActivityCard({ 
@@ -29,7 +29,6 @@ export default function ActivityCard({
     <div 
       className={cn(
         "group relative overflow-hidden rounded-2xl bg-white border border-slate-100 shadow-sm hover:shadow-xl transition-all duration-300 flex",
-        // Logic layout berdasarkan prop isHorizontal
         isHorizontal ? "flex-col lg:flex-row" : "flex-col h-full",
         className
       )}
@@ -37,8 +36,6 @@ export default function ActivityCard({
       {/* 1. IMAGE SECTION */}
       <div className={cn(
         "relative overflow-hidden",
-        // Jika Horizontal: Width full di mobile, tapi 35% di desktop (lg) & tinggi full
-        // Jika Vertikal: Tinggi fix 12rem (48) & width full
         isHorizontal ? "w-full h-56 lg:w-[45%] lg:h-auto" : "h-56 w-full"
       )}>
         <Image
@@ -48,7 +45,7 @@ export default function ActivityCard({
           className="object-cover transition-transform duration-700 group-hover:scale-105"
         />
         
-        {/* Overlay Gradient (Hanya muncul di vertikal atau mobile view agar teks terbaca jika overlap) */}
+        {/* Overlay Gradient */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-60 lg:opacity-30" />
         
         {/* Date Badge */}
@@ -69,12 +66,15 @@ export default function ActivityCard({
            <span>Pengurus RT</span>
         </div>
 
-        <h3 className={cn(
-          "font-bold text-slate-800 mb-3 group-hover:text-blue-600 transition-colors",
-          isHorizontal ? "text-2xl md:text-3xl" : "text-lg line-clamp-2"
-        )}>
-          {activity.title}
-        </h3>
+        {/* --- UPDATE: Judul dibungkus Link --- */}
+        <Link href={`/aktivitas/${activity.slug}`} className="block">
+            <h3 className={cn(
+              "font-bold text-slate-800 mb-3 group-hover:text-blue-600 transition-colors",
+              isHorizontal ? "text-2xl md:text-3xl" : "text-lg line-clamp-2"
+            )}>
+              {activity.title}
+            </h3>
+        </Link>
         
         <p className={cn(
           "text-slate-500 mb-6",
@@ -84,14 +84,16 @@ export default function ActivityCard({
         </p>
 
         <div className="mt-auto pt-4 border-t border-slate-50 flex justify-between items-center w-full">
-          {/* Tombol Panah Kecil */}
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 p-0 h-auto font-semibold text-xs flex items-center gap-1 ml-auto"
-          >
-            Baca Selengkapnya <ArrowRight size={14} />
-          </Button>
+          {/* --- UPDATE: Tombol dibungkus Link --- */}
+          <Link href={`/aktivitas/${activity.slug}`} className="ml-auto">
+             <Button 
+                variant="ghost" 
+                size="sm" 
+                className="text-blue-600 hover:text-blue-700 hover:bg-blue-50 p-0 h-auto font-semibold text-xs flex items-center gap-1"
+             >
+                Baca Selengkapnya <ArrowRight size={14} />
+             </Button>
+          </Link>
         </div>
       </div>
     </div>

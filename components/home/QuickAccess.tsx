@@ -1,9 +1,41 @@
 "use client";
 
+import { useState } from "react";
 import { Wallet, Megaphone, ArrowRight } from "lucide-react";
 import Button from "@/components/ui/Button";
+import PayDuesModal from "@/components/home/PayDuesModal";
+import ReportModal from "@/components/home/ReportModal"; // Import Modal Lapor
+import { useAuth } from "@/lib/context/AuthContext";
+import { useUI } from "@/lib/context/UIContext";
 
 export default function QuickAccess() {
+  const { user } = useAuth();
+  const { openLoginModal } = useUI();
+  
+  // State untuk kedua modal
+  const [isPayModalOpen, setIsPayModalOpen] = useState(false);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+
+  // Logic Klik Tombol Bayar
+  const handlePayClick = () => {
+    if (!user) {
+      alert("Silakan login sebagai Warga terlebih dahulu.");
+      openLoginModal();
+    } else {
+      setIsPayModalOpen(true);
+    }
+  };
+
+  // Logic Klik Tombol Lapor
+  const handleReportClick = () => {
+    if (!user) {
+      alert("Silakan login sebagai Warga terlebih dahulu.");
+      openLoginModal();
+    } else {
+      setIsReportModalOpen(true);
+    }
+  };
+
   return (
     <section id="menu-cepat" className="py-20 bg-white border-y border-slate-100">
       <div className="container mx-auto px-4">
@@ -39,7 +71,12 @@ export default function QuickAccess() {
                         Cek tagihan bulanan (kebersihan & keamanan) dan lakukan pembayaran digital dengan mudah, aman, dan tercatat otomatis.
                     </p>
                     
-                    <Button variant="primary" size="lg" className="w-full sm:w-auto group-hover:pl-8 transition-all">
+                    <Button 
+                        onClick={handlePayClick}
+                        variant="primary" 
+                        size="lg" 
+                        className="w-full sm:w-auto group-hover:pl-8 transition-all"
+                    >
                         Bayar Sekarang <ArrowRight size={18} className="ml-2 group-hover:translate-x-1 transition-transform" />
                     </Button>
                 </div>
@@ -63,8 +100,8 @@ export default function QuickAccess() {
                         Ada keluhan lingkungan? Atau butuh surat pengantar? Sampaikan laporan Anda langsung kepada pengurus RT melalui sistem ini.
                     </p>
                     
-                    {/* Custom Style Button untuk menyesuaikan tema Orange */}
                     <Button 
+                        onClick={handleReportClick}
                         size="lg" 
                         className="w-full sm:w-auto bg-orange-500 hover:bg-orange-600 text-white shadow-orange-900/20 border-transparent group-hover:pl-8 transition-all"
                     >
@@ -75,6 +112,18 @@ export default function QuickAccess() {
 
         </div>
       </div>
+
+      {/* RENDER MODAL DI SINI */}
+      <PayDuesModal 
+        isOpen={isPayModalOpen} 
+        onClose={() => setIsPayModalOpen(false)} 
+      />
+      
+      <ReportModal 
+        isOpen={isReportModalOpen} 
+        onClose={() => setIsReportModalOpen(false)} 
+      />
+
     </section>
   );
 }

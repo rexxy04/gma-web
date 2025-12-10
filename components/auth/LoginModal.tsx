@@ -9,6 +9,10 @@ import Modal from "@/components/ui/Modal";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 
+import { db } from "@/lib/firebase/firebase";
+import { doc, getDoc } from "firebase/firestore";
+
+
 export default function LoginModal() {
   const { isLoginModalOpen, closeLoginModal } = useUI();
   const { login } = useAuth(); // Ambil fungsi login
@@ -26,24 +30,47 @@ export default function LoginModal() {
     setErrorMsg("");
 
     try {
-      // 1. Eksekusi Login Firebase
-      await login(email, password);
-      
-      // 2. Jika sukses (tidak error):
-      // Kita tunggu sebentar agar state AuthContext terupdate (optional, tapi aman)
-      // Note: Redirect spesifik role sebaiknya dicek di AuthContext atau di sini setelah fetch user.
-      // Untuk kesederhanaan, kita anggap jika login sukses, kita cek role nanti di halaman tujuan.
-      
-      // Tutup modal
-      closeLoginModal();
-      
-      // Reset form
-      setEmail("");
-      setPassword("");
+      // 1. Proses Login Auth
+        await login(email, password);
+        
+      // 2. Cek Role User di Firestore secara manual agar akurat
+      // (Kita tidak mengandalkan state context yg mungkin delay update-nya)
+      // Note: Pastikan user yang login memang ada di auth, kita ambil uid dari auth.currentUser
+      // Tapi karena 'login' void, kita butuh instance auth atau query ulang. 
+      // Agar simpel & aman, kita gunakan logika redirect sederhana di sini atau 
+      // biarkan AuthContext mengupdate user, lalu kita cek.
+      // NAMUN, cara paling responsif adalah fetch langsung:
+    
+      // Kita butuh UID. Karena fungsi login() kita void, kita perlu akses auth instance
+      // atau tangkap user dari kembalian signInWithEmailAndPassword (jika kita ubah return type login).
+      // TAPI, mari kita gunakan pendekatan AuthContext + useEffect redirect? 
+      // TIDAK, lebih baik fetch manual di sini biar UX cepat:
+    
+        const { getAuth } = await import("firebase/auth");
+        const auth = getAuth();
+        const currentUser = auth.currentUser;
 
-      // Redirect ke Dashboard (Nanti Middleware yang akan nendang balik jika bukan admin)
-      // Tapi untuk UX yang baik, kita bisa redirect langsung:
-      router.push("/dashboard");
+        if (currentUser) {
+            const docRef = doc(db, "users", currentUser.uid);
+            const docSnap = await getDoc(docRef);
+        
+        if (docSnap.exists()) {
+            const role = docSnap.data().role;
+            
+            closeLoginModal();
+            setEmail("");
+            setPassword("");
+
+            if (role === 'admin') {
+                router.push("/dashboard");
+            } else {
+             // Jika Warga, refresh halaman atau stay di homepage
+             // Router refresh berguna agar Navbar terupdate statusnya
+            router.refresh(); 
+             // Opsional: Tampilkan notifikasi toast "Selamat datang"
+            }    
+        }
+      }
 
     } catch (err: any) {
       // 3. Handle Error Firebase
@@ -64,7 +91,7 @@ export default function LoginModal() {
     <Modal 
       isOpen={isLoginModalOpen} 
       onClose={closeLoginModal} 
-      title="Login Pengurus"
+      title="Login Akun"
     >
       {/* Pesan Error Alert */}
       {errorMsg && (
