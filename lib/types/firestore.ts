@@ -84,3 +84,14 @@ export interface Complaint {
   createdAt: number;
   updatedAt?: number;
 }
+
+// 7. EXPENSE / PENGELUARAN
+export interface Expense {
+  id: string;
+  title: string;      // Keperluan (misal: "Bayar Listrik Pos")
+  amount: number;     // Nominal
+  date: number;       // Tanggal pengeluaran
+  category: string;   // Operasional, Sosial, Pembangunan, dll
+  recordedBy: string; // Admin yang mencatat
+  createdAt: number;
+}
