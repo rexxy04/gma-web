@@ -1,9 +1,8 @@
-// src/components/layout/Navbar.tsx
 "use client";
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation"; 
+import { useRouter, usePathname } from "next/navigation"; // Pastikan usePathname diimport
 import { Menu, X, Home, LogOut, User as UserIcon, LayoutDashboard } from "lucide-react"; 
 import { cn } from "@/lib/utils";
 import Button from "@/components/ui/Button";
@@ -15,19 +14,19 @@ const navItems = [
   { name: "Menu Cepat", href: "/#menu-cepat" },
   { name: "Jadwal Kegiatan", href: "/#jadwal" },
   { name: "Dokumentasi", href: "/#dokumentasi" },
-  { name: "Kepengurusan", href: "#kepengurusan" },
+  { name: "Kepengurusan", href: "/#kepengurusan" },
 ];
 
 export default function Navbar() {
   const { openLoginModal } = useUI();
-  const { user, logout } = useAuth(); // Ambil data user
+  const { user, logout } = useAuth();
   const router = useRouter();
+  const pathname = usePathname(); // 1. Ambil URL saat ini
 
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isProfileOpen, setIsProfileOpen] = useState(false); // Dropdown profil
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
 
-  // Efek scroll glassmorphism
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20);
@@ -38,16 +37,23 @@ export default function Navbar() {
 
   const handleLogout = async () => {
     await logout();
-    router.refresh(); // Refresh agar UI balik ke mode tamu
-    setIsProfileOpen(false); // Tutup dropdown
-    setIsMobileMenuOpen(false); // Tutup mobile menu
+    router.refresh();
+    setIsProfileOpen(false);
+    setIsMobileMenuOpen(false);
   };
+
+  // 2. Logic Penentu Style
+  // Jika URL-nya "/" (Homepage), cek apakah discroll.
+  // Jika URL-nya BUKAN "/" (seperti "/warga", "/aktivitas"), SELALU aktifkan mode Glass (Gelap).
+  const isHomePage = pathname === "/";
+  const showGlassStyle = !isHomePage || isScrolled;
 
   return (
     <nav
       className={cn(
         "fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out",
-        isScrolled
+        // Terapkan background putih/glass jika showGlassStyle true
+        showGlassStyle
           ? "bg-white/80 backdrop-blur-md shadow-sm border-b border-white/20 py-3"
           : "bg-transparent py-5"
       )}
@@ -59,7 +65,8 @@ export default function Navbar() {
           href="/" 
           className={cn(
             "flex items-center gap-2 font-bold text-xl tracking-tight transition-colors",
-            isScrolled ? "text-slate-800" : "text-white"
+            // Ubah warna teks logo jadi gelap jika bukan di mode transparan
+            showGlassStyle ? "text-slate-800" : "text-white"
           )}
         >
             <div className="bg-blue-600 p-1.5 rounded-lg text-white">
@@ -76,7 +83,8 @@ export default function Navbar() {
               href={item.href}
               className={cn(
                 "text-sm font-medium transition-colors hover:text-blue-500",
-                isScrolled ? "text-slate-600" : "text-white/90 hover:text-white"
+                // Ubah warna teks menu jadi gelap jika bukan di mode transparan
+                showGlassStyle ? "text-slate-600" : "text-white/90 hover:text-white"
               )}
             >
               {item.name}
@@ -87,13 +95,13 @@ export default function Navbar() {
         {/* AUTH BUTTONS AREA (DESKTOP) */}
         <div className="hidden md:block">
             {user ? (
-                // JIKA SUDAH LOGIN
                 <div className="relative">
                     <button 
                         onClick={() => setIsProfileOpen(!isProfileOpen)}
                         className={cn(
                             "flex items-center gap-2 px-3 py-1.5 rounded-full transition-all border",
-                            isScrolled 
+                            // Ubah style tombol profil
+                            showGlassStyle 
                                 ? "bg-white border-slate-200 text-slate-700 hover:bg-slate-50" 
                                 : "bg-white/10 border-white/20 text-white hover:bg-white/20 backdrop-blur-sm"
                         )}
@@ -107,15 +115,21 @@ export default function Navbar() {
                     {/* Dropdown Menu */}
                     {isProfileOpen && (
                         <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-100 py-1 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                            
-                            {/* LOGIC LINK DASHBOARD */}
-                            <Link 
-                                href={user.role === 'admin' ? "/dashboard" : "/warga"} // <--- UPDATE INI
+                            {user.role === 'admin' && (
+                                <Link 
+                                    href="/dashboard"
+                                    className="flex items-center gap-2 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 hover:text-blue-600"
+                                >
+                                    <LayoutDashboard size={16} />
+                                    Dashboard Admin
+                                </Link>
+                            )}
+                             <Link 
+                                href={user.role === 'admin' ? "/dashboard" : "/warga"} 
                                 className="flex items-center gap-2 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 hover:text-blue-600"
-                                onClick={() => setIsProfileOpen(false)}
                             >
-                                <LayoutDashboard size={16} />
-                                {user.role === 'admin' ? "Dashboard Admin" : "Dashboard Saya"} {/* <--- UPDATE LABEL */}
+                                <UserIcon size={16} />
+                                {user.role === 'admin' ? "Profil Saya" : "Dashboard Saya"}
                             </Link>
                             
                             <button 
@@ -129,12 +143,11 @@ export default function Navbar() {
                     )}
                 </div>
             ) : (
-                // JIKA BELUM LOGIN (Tamu)
                 <Button 
                     onClick={openLoginModal}
                     size="sm"
                     className={cn(
-                        isScrolled 
+                        showGlassStyle 
                             ? "bg-blue-600 text-white hover:bg-blue-700" 
                             : "bg-white text-blue-900 hover:bg-gray-100"
                     )}
@@ -150,9 +163,9 @@ export default function Navbar() {
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
         >
           {isMobileMenuOpen ? (
-            <X className={isScrolled ? "text-slate-800" : "text-white"} />
+            <X className={showGlassStyle ? "text-slate-800" : "text-white"} />
           ) : (
-            <Menu className={isScrolled ? "text-slate-800" : "text-white"} />
+            <Menu className={showGlassStyle ? "text-slate-800" : "text-white"} />
           )}
         </button>
       </div>
@@ -171,7 +184,6 @@ export default function Navbar() {
             </Link>
           ))}
           
-          {/* Auth Section Mobile */}
           <div className="pt-4 border-t border-gray-100 mt-2">
             {user ? (
                  <div className="space-y-2">
@@ -179,8 +191,6 @@ export default function Navbar() {
                         <UserIcon size={16} />
                         Halo, <span className="font-semibold text-slate-800">{user.displayName}</span>
                     </div>
-
-
                     {user.role === 'admin' ? (
                         <Link href="/dashboard">
                             <Button className="w-full mb-2" variant="outline" onClick={() => setIsMobileMenuOpen(false)}>
@@ -188,14 +198,12 @@ export default function Navbar() {
                             </Button>
                         </Link>
                     ) : (
-                        <Link href="/warga"> {/* <--- Link Warga */}
+                        <Link href="/warga">
                             <Button className="w-full mb-2" variant="outline" onClick={() => setIsMobileMenuOpen(false)}>
                                 Dashboard Saya
                             </Button>
                         </Link>
                     )}
-
-
                     <Button onClick={handleLogout} className="w-full" variant="danger">
                         Keluar
                     </Button>

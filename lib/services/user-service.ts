@@ -6,7 +6,9 @@ import {
   doc, 
   setDoc, 
   serverTimestamp,
-  orderBy
+  orderBy,
+  updateDoc,
+  deleteDoc
 } from "firebase/firestore";
 import { initializeApp, getApp, deleteApp } from "firebase/app";
 import { getAuth, createUserWithEmailAndPassword, signOut } from "firebase/auth";
@@ -100,5 +102,36 @@ export async function createResident(data: {
   } finally {
     // 5. Hancurkan App Kedua agar hemat memori
     await deleteApp(secondaryApp);
+  }
+}
+
+/**
+ * UPDATE DATA WARGA
+ */
+export async function updateResident(uid: string, data: Partial<UserProfile>) {
+  try {
+    const userRef = doc(db, "users", uid);
+    await updateDoc(userRef, {
+      ...data,
+      // Jangan update field sensitif/sistem seperti email/uid disini jika tidak perlu
+    });
+  } catch (error) {
+    console.error("Gagal update warga:", error);
+    throw error;
+  }
+}
+
+/**
+ * HAPUS DATA WARGA (Firestore Only)
+ * Note: Menghapus Auth User membutuhkan Admin SDK (Cloud Functions).
+ * Di client side, kita hanya bisa menghapus datanya di Firestore agar tidak muncul di list.
+ */
+export async function deleteResident(uid: string) {
+  try {
+    const userRef = doc(db, "users", uid);
+    await deleteDoc(userRef);
+  } catch (error) {
+    console.error("Gagal hapus warga:", error);
+    throw error;
   }
 }
