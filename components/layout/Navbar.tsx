@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter, usePathname } from "next/navigation"; // Pastikan usePathname diimport
+import { useRouter, usePathname } from "next/navigation"; 
 import { Menu, X, Home, LogOut, User as UserIcon, LayoutDashboard } from "lucide-react"; 
 import { cn } from "@/lib/utils";
 import Button from "@/components/ui/Button";
@@ -21,7 +21,7 @@ export default function Navbar() {
   const { openLoginModal } = useUI();
   const { user, logout } = useAuth();
   const router = useRouter();
-  const pathname = usePathname(); // 1. Ambil URL saat ini
+  const pathname = usePathname();
 
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -42,19 +42,16 @@ export default function Navbar() {
     setIsMobileMenuOpen(false);
   };
 
-  // 2. Logic Penentu Style
-  // Jika URL-nya "/" (Homepage), cek apakah discroll.
-  // Jika URL-nya BUKAN "/" (seperti "/warga", "/aktivitas"), SELALU aktifkan mode Glass (Gelap).
+  // Logic Navbar Solid/Glass
   const isHomePage = pathname === "/";
-  const showGlassStyle = !isHomePage || isScrolled;
+  const showGlassStyle = !isHomePage || isScrolled || isMobileMenuOpen;
 
   return (
     <nav
       className={cn(
         "fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out",
-        // Terapkan background putih/glass jika showGlassStyle true
         showGlassStyle
-          ? "bg-white/80 backdrop-blur-md shadow-sm border-b border-white/20 py-3"
+          ? "bg-white/95 backdrop-blur-md shadow-sm border-b border-white/20 py-3"
           : "bg-transparent py-5"
       )}
     >
@@ -65,7 +62,6 @@ export default function Navbar() {
           href="/" 
           className={cn(
             "flex items-center gap-2 font-bold text-xl tracking-tight transition-colors",
-            // Ubah warna teks logo jadi gelap jika bukan di mode transparan
             showGlassStyle ? "text-slate-800" : "text-white"
           )}
         >
@@ -83,7 +79,6 @@ export default function Navbar() {
               href={item.href}
               className={cn(
                 "text-sm font-medium transition-colors hover:text-blue-500",
-                // Ubah warna teks menu jadi gelap jika bukan di mode transparan
                 showGlassStyle ? "text-slate-600" : "text-white/90 hover:text-white"
               )}
             >
@@ -100,7 +95,6 @@ export default function Navbar() {
                         onClick={() => setIsProfileOpen(!isProfileOpen)}
                         className={cn(
                             "flex items-center gap-2 px-3 py-1.5 rounded-full transition-all border",
-                            // Ubah style tombol profil
                             showGlassStyle 
                                 ? "bg-white border-slate-200 text-slate-700 hover:bg-slate-50" 
                                 : "bg-white/10 border-white/20 text-white hover:bg-white/20 backdrop-blur-sm"
@@ -172,7 +166,8 @@ export default function Navbar() {
 
       {/* MOBILE MENU DROPDOWN */}
       {isMobileMenuOpen && (
-        <div className="md:hidden absolute top-full left-0 w-full bg-white/95 backdrop-blur-xl border-b border-gray-100 shadow-xl p-4 flex flex-col gap-4 animate-in slide-in-from-top-5">
+        <div className="md:hidden absolute top-full left-0 w-full bg-white border-b border-gray-100 shadow-xl p-4 flex flex-col gap-4 animate-in slide-in-from-top-5">
+          
           {navItems.map((item) => (
             <Link
               key={item.name}
@@ -191,19 +186,30 @@ export default function Navbar() {
                         <UserIcon size={16} />
                         Halo, <span className="font-semibold text-slate-800">{user.displayName}</span>
                     </div>
+                    
+                    {/* BUTTON DASHBOARD MOBILE */}
                     {user.role === 'admin' ? (
                         <Link href="/dashboard">
-                            <Button className="w-full mb-2" variant="outline" onClick={() => setIsMobileMenuOpen(false)}>
+                            <Button 
+                                className="w-full mb-2 border-slate-200 text-slate-700 hover:bg-slate-50" 
+                                variant="outline" 
+                                onClick={() => setIsMobileMenuOpen(false)}
+                            >
                                 Ke Dashboard
                             </Button>
                         </Link>
                     ) : (
                         <Link href="/warga">
-                            <Button className="w-full mb-2" variant="outline" onClick={() => setIsMobileMenuOpen(false)}>
+                            <Button 
+                                className="w-full mb-2 border-slate-200 text-slate-700 hover:bg-slate-50" 
+                                variant="outline" 
+                                onClick={() => setIsMobileMenuOpen(false)}
+                            >
                                 Dashboard Saya
                             </Button>
                         </Link>
                     )}
+                    
                     <Button onClick={handleLogout} className="w-full" variant="danger">
                         Keluar
                     </Button>
