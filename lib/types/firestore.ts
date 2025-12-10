@@ -61,3 +61,11 @@ export interface EventSchedule {
   location: string;
   category: "rapat" | "kerja-bakti" | "sosial" | "keamanan"; // Untuk color coding badge
 }
+
+// 5. GALLERY ITEM (Untuk Marquee Homepage)
+export interface GalleryItem {
+  id: string;
+  url: string;        // URL download dari Firebase Storage
+  storagePath: string; // Path di storage (penting untuk hapus file nanti)
+  createdAt: number;
+}
