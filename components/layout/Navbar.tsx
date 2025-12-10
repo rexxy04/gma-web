@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter, usePathname } from "next/navigation"; // 1. Tambah usePathname
+import { useRouter, usePathname } from "next/navigation"; // Pastikan usePathname diimport
 import { Menu, X, Home, LogOut, User as UserIcon, LayoutDashboard } from "lucide-react"; 
 import { cn } from "@/lib/utils";
 import Button from "@/components/ui/Button";
@@ -21,7 +21,7 @@ export default function Navbar() {
   const { openLoginModal } = useUI();
   const { user, logout } = useAuth();
   const router = useRouter();
-  const pathname = usePathname(); // 2. Ambil path URL saat ini
+  const pathname = usePathname(); // 1. Ambil URL saat ini
 
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -42,9 +42,9 @@ export default function Navbar() {
     setIsMobileMenuOpen(false);
   };
 
-  // 3. Logic Penentu Style
-  // Jika sedang di Homepage ("/"), ikuti logic scroll.
-  // Jika di halaman lain (misal "/aktivitas"), paksa tampilkan mode glass/solid (true).
+  // 2. Logic Penentu Style
+  // Jika URL-nya "/" (Homepage), cek apakah discroll.
+  // Jika URL-nya BUKAN "/" (seperti "/warga", "/aktivitas"), SELALU aktifkan mode Glass (Gelap).
   const isHomePage = pathname === "/";
   const showGlassStyle = !isHomePage || isScrolled;
 
@@ -52,7 +52,7 @@ export default function Navbar() {
     <nav
       className={cn(
         "fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out",
-        // Gunakan variabel showGlassStyle
+        // Terapkan background putih/glass jika showGlassStyle true
         showGlassStyle
           ? "bg-white/80 backdrop-blur-md shadow-sm border-b border-white/20 py-3"
           : "bg-transparent py-5"
@@ -65,6 +65,7 @@ export default function Navbar() {
           href="/" 
           className={cn(
             "flex items-center gap-2 font-bold text-xl tracking-tight transition-colors",
+            // Ubah warna teks logo jadi gelap jika bukan di mode transparan
             showGlassStyle ? "text-slate-800" : "text-white"
           )}
         >
@@ -82,6 +83,7 @@ export default function Navbar() {
               href={item.href}
               className={cn(
                 "text-sm font-medium transition-colors hover:text-blue-500",
+                // Ubah warna teks menu jadi gelap jika bukan di mode transparan
                 showGlassStyle ? "text-slate-600" : "text-white/90 hover:text-white"
               )}
             >
@@ -98,6 +100,7 @@ export default function Navbar() {
                         onClick={() => setIsProfileOpen(!isProfileOpen)}
                         className={cn(
                             "flex items-center gap-2 px-3 py-1.5 rounded-full transition-all border",
+                            // Ubah style tombol profil
                             showGlassStyle 
                                 ? "bg-white border-slate-200 text-slate-700 hover:bg-slate-50" 
                                 : "bg-white/10 border-white/20 text-white hover:bg-white/20 backdrop-blur-sm"
@@ -109,6 +112,7 @@ export default function Navbar() {
                         </span>
                     </button>
 
+                    {/* Dropdown Menu */}
                     {isProfileOpen && (
                         <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-100 py-1 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
                             {user.role === 'admin' && (
