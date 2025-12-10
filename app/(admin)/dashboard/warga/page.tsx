@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { UserPlus, Search, Home, Phone, MoreHorizontal, Edit, Trash2 } from "lucide-react";
 import Button from "@/components/ui/Button";
 import AddResidentModal from "@/components/admin/AddResidentModal";
+import AlertModal, { AlertType } from "@/components/ui/AlertModal"; // 1. Import AlertModal
 import { getResidents, deleteResident } from "@/lib/services/user-service";
 import { UserProfile } from "@/lib/types/firestore";
 
@@ -12,10 +13,24 @@ export default function WargaPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   
-  // State Modal & Dropdown
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingData, setEditingData] = useState<UserProfile | null>(null);
-  const [activeDropdown, setActiveDropdown] = useState<string | null>(null); // Menyimpan UID warga yang dropdown-nya aktif
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+
+  // 2. State Alert
+  const [alertState, setAlertState] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    type: AlertType;
+    onConfirm?: () => void;
+    isLoading?: boolean;
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+    type: "info",
+  });
 
   const fetchData = async () => {
     setIsLoading(true);
@@ -33,27 +48,60 @@ export default function WargaPage() {
     fetchData();
   }, []);
 
-  // Handle Edit
   const handleEdit = (warga: UserProfile) => {
     setEditingData(warga);
-    setActiveDropdown(null); // Tutup dropdown
+    setActiveDropdown(null);
     setIsModalOpen(true);
   };
 
-  // Handle Create
   const handleCreate = () => {
     setEditingData(null);
     setActiveDropdown(null);
     setIsModalOpen(true);
   };
 
-  // Handle Delete
-  const handleDelete = async (uid: string) => {
-    if (confirm("Yakin ingin menghapus data warga ini? (Akun login tidak terhapus otomatis)")) {
-        setActiveDropdown(null);
+  // 3. Trigger Konfirmasi Hapus
+  const handleDeleteClick = (uid: string) => {
+    setActiveDropdown(null);
+    setAlertState({
+        isOpen: true,
+        title: "Hapus Warga?",
+        message: "Data warga ini akan dihapus dari daftar. Akun login mereka juga akan dinonaktifkan dari sistem website.",
+        type: "warning",
+        onConfirm: () => processDelete(uid),
+    });
+  };
+
+  // 4. Proses Hapus
+  const processDelete = async (uid: string) => {
+    setAlertState(prev => ({ ...prev, isLoading: true }));
+    try {
         await deleteResident(uid);
+        
+        setAlertState({
+            isOpen: true,
+            title: "Warga Dihapus",
+            message: "Data warga berhasil dihapus.",
+            type: "success",
+            onConfirm: undefined,
+            isLoading: false
+        });
+        
         fetchData();
+    } catch (error) {
+        setAlertState({
+            isOpen: true,
+            title: "Gagal Menghapus",
+            message: "Terjadi kesalahan sistem.",
+            type: "error",
+            onConfirm: undefined,
+            isLoading: false
+        });
     }
+  };
+
+  const handleAlertClose = () => {
+    setAlertState(prev => ({ ...prev, isOpen: false }));
   };
 
   const filteredResidents = residents.filter(r => 
@@ -63,8 +111,6 @@ export default function WargaPage() {
 
   return (
     <div className="space-y-6" onClick={() => setActiveDropdown(null)}> 
-      {/* ^^^ Klik dimanapun menutup dropdown */}
-
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-800">Data Warga</h1>
@@ -75,7 +121,6 @@ export default function WargaPage() {
         </Button>
       </div>
 
-      {/* SEARCH BAR */}
       <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center gap-3">
         <Search className="text-slate-400" size={20} />
         <input 
@@ -88,7 +133,6 @@ export default function WargaPage() {
       </div>
 
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-visible"> 
-        {/* overflow-visible penting agar dropdown tidak terpotong */}
         <div className="overflow-x-auto min-h-[300px]">
           <table className="w-full text-left text-sm">
             <thead className="bg-slate-50 border-b border-slate-200">
@@ -130,10 +174,9 @@ export default function WargaPage() {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right relative">
-                      {/* BUTTON TITIK TIGA */}
                       <button 
                         onClick={(e) => {
-                            e.stopPropagation(); // Mencegah klik tembus ke parent div
+                            e.stopPropagation();
                             setActiveDropdown(activeDropdown === warga.uid ? null : warga.uid);
                         }}
                         className={`p-2 rounded-full transition-colors ${activeDropdown === warga.uid ? 'bg-blue-100 text-blue-600' : 'text-slate-400 hover:text-blue-600 hover:bg-blue-50'}`}
@@ -141,7 +184,6 @@ export default function WargaPage() {
                         <MoreHorizontal size={18} />
                       </button>
 
-                      {/* DROPDOWN MENU */}
                       {activeDropdown === warga.uid && (
                         <div className="absolute right-8 top-8 w-32 bg-white rounded-lg shadow-xl border border-slate-100 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
                             <button 
@@ -151,7 +193,7 @@ export default function WargaPage() {
                                 <Edit size={14} /> Edit Data
                             </button>
                             <button 
-                                onClick={() => handleDelete(warga.uid)}
+                                onClick={() => handleDeleteClick(warga.uid)} // <--- Ganti logic delete
                                 className="w-full flex items-center gap-2 px-4 py-2 text-left text-xs text-red-600 hover:bg-red-50"
                             >
                                 <Trash2 size={14} /> Hapus
@@ -173,7 +215,18 @@ export default function WargaPage() {
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)}
         onSuccess={fetchData}
-        initialData={editingData} // Kirim data edit jika ada
+        initialData={editingData}
+      />
+      
+      {/* 5. Render Alert */}
+      <AlertModal 
+        isOpen={alertState.isOpen}
+        onClose={handleAlertClose}
+        title={alertState.title}
+        message={alertState.message}
+        type={alertState.type}
+        onConfirm={alertState.onConfirm}
+        isLoading={alertState.isLoading}
       />
     </div>
   );
