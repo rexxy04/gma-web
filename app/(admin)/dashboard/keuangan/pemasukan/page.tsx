@@ -9,11 +9,12 @@ import { Payment, UserProfile } from "@/lib/types/firestore";
 import Button from "@/components/ui/Button";
 import Modal from "@/components/ui/Modal";
 import Input from "@/components/ui/Input";
+import AlertModal, { AlertType } from "@/components/ui/AlertModal"; // 1. Import AlertModal
 
 export default function PemasukanPage() {
   const { user: adminUser } = useAuth();
   const [payments, setPayments] = useState<Payment[]>([]);
-  const [residents, setResidents] = useState<UserProfile[]>([]); // Array untuk dropdown
+  const [residents, setResidents] = useState<UserProfile[]>([]); 
   const [residentsMap, setResidentsMap] = useState<Record<string, UserProfile>>({});
   const [isLoading, setIsLoading] = useState(true);
   
@@ -21,9 +22,22 @@ export default function PemasukanPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [formData, setFormData] = useState({
     userId: "",
-    amount: 100000, // Default iuran
+    amount: 100000, 
     month: new Date().getMonth() + 1,
     year: new Date().getFullYear(),
+  });
+
+  // 2. State untuk Alert Custom
+  const [alertState, setAlertState] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    type: AlertType;
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+    type: "info",
   });
 
   const fetchData = async () => {
@@ -51,7 +65,7 @@ export default function PemasukanPage() {
     fetchData();
   }, []);
 
-  // Handle Input Manual
+  // 3. Handle Input Manual dengan Alert
   const handleManualSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!adminUser || !formData.userId) return;
@@ -61,11 +75,41 @@ export default function PemasukanPage() {
         ...formData,
         adminId: adminUser.uid
       });
-      alert("Pembayaran berhasil dicatat!");
-      setIsModalOpen(false);
-      fetchData(); // Refresh tabel
+      
+      // Alert Sukses
+      setAlertState({
+        isOpen: true,
+        title: "Pembayaran Dicatat",
+        message: "Data pembayaran tunai berhasil disimpan ke dalam sistem.",
+        type: "success"
+      });
+
+      // Reset form default values
+      setFormData(prev => ({
+        ...prev,
+        userId: "",
+        amount: 100000
+      }));
+
     } catch (error) {
-      alert("Gagal menyimpan data.");
+      // Alert Gagal
+      setAlertState({
+        isOpen: true,
+        title: "Gagal Menyimpan",
+        message: "Terjadi kesalahan saat mencatat pembayaran.",
+        type: "error"
+      });
+    }
+  };
+
+  // 4. Handle Tutup Alert
+  const handleAlertClose = () => {
+    setAlertState(prev => ({ ...prev, isOpen: false }));
+    
+    // Jika sukses, tutup modal form dan refresh data
+    if (alertState.type === "success") {
+        setIsModalOpen(false);
+        fetchData();
     }
   };
 
@@ -123,7 +167,6 @@ export default function PemasukanPage() {
                   return (
                     <tr key={p.id} className="hover:bg-slate-50">
                       <td className="px-6 py-4 text-slate-500">
-                         {/* Convert timestamp ke Date string */}
                          {new Date(p.createdAt).toLocaleDateString("id-ID")}
                       </td>
                       <td className="px-6 py-4 font-medium text-slate-800">
@@ -166,7 +209,7 @@ export default function PemasukanPage() {
              <div className="space-y-1.5">
                 <label className="text-sm font-medium text-slate-700">Nama Warga</label>
                 <select 
-                    className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-200 outline-none"
+                    className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-200 outline-none bg-white"
                     value={formData.userId}
                     onChange={(e) => setFormData({...formData, userId: e.target.value})}
                     required
@@ -184,7 +227,7 @@ export default function PemasukanPage() {
                 <div className="space-y-1.5">
                     <label className="text-sm font-medium text-slate-700">Bulan</label>
                     <select 
-                        className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm"
+                        className="w-full rounded-lg border border-slate-300 px-3 py-2.5 text-sm bg-white"
                         value={formData.month}
                         onChange={(e) => setFormData({...formData, month: parseInt(e.target.value)})}
                     >
@@ -214,6 +257,16 @@ export default function PemasukanPage() {
              </div>
         </form>
       </Modal>
+
+      {/* 5. Render AlertModal */}
+      <AlertModal 
+        isOpen={alertState.isOpen}
+        onClose={handleAlertClose}
+        title={alertState.title}
+        message={alertState.message}
+        type={alertState.type}
+      />
+
     </div>
   );
 }
