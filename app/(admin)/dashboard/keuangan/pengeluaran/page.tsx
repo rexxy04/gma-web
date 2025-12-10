@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { TrendingDown, Plus, Trash2, Calendar } from "lucide-react";
+import { Plus, Trash2, Calendar } from "lucide-react";
 import Button from "@/components/ui/Button";
 import AddExpenseModal from "@/components/admin/AddExpenseModal";
+import AlertModal, { AlertType } from "@/components/ui/AlertModal"; // 1. Import AlertModal
 import { getExpenses, deleteExpense } from "@/lib/services/expense-service";
 import { Expense } from "@/lib/types/firestore";
 
@@ -11,6 +12,21 @@ export default function PengeluaranPage() {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // 2. State Alert
+  const [alertState, setAlertState] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    type: AlertType;
+    onConfirm?: () => void;
+    isLoading?: boolean;
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+    type: "info",
+  });
 
   const fetchData = async () => {
     setIsLoading(true);
@@ -28,11 +44,48 @@ export default function PengeluaranPage() {
     fetchData();
   }, []);
 
-  const handleDelete = async (id: string) => {
-    if (confirm("Hapus data pengeluaran ini?")) {
+  // 3. Trigger Alert Konfirmasi Hapus
+  const handleDeleteClick = (id: string) => {
+    setAlertState({
+        isOpen: true,
+        title: "Hapus Pengeluaran?",
+        message: "Data yang dihapus tidak dapat dikembalikan. Lanjutkan?",
+        type: "warning", // Warna oranye
+        onConfirm: () => processDelete(id),
+    });
+  };
+
+  // 4. Proses Hapus Data
+  const processDelete = async (id: string) => {
+    setAlertState(prev => ({ ...prev, isLoading: true }));
+    try {
         await deleteExpense(id);
+        
+        // Alert Sukses
+        setAlertState({
+            isOpen: true,
+            title: "Data Dihapus",
+            message: "Data pengeluaran berhasil dihapus dari sistem.",
+            type: "success",
+            onConfirm: undefined, // Hapus onConfirm agar jadi alert biasa
+            isLoading: false
+        });
+        
         fetchData();
+    } catch (error) {
+        setAlertState({
+            isOpen: true,
+            title: "Gagal Menghapus",
+            message: "Terjadi kesalahan saat menghapus data.",
+            type: "error",
+            onConfirm: undefined,
+            isLoading: false
+        });
     }
+  };
+
+  const handleAlertClose = () => {
+    setAlertState(prev => ({ ...prev, isOpen: false }));
   };
 
   const totalExpense = expenses.reduce((sum, item) => sum + item.amount, 0);
@@ -96,7 +149,7 @@ export default function PengeluaranPage() {
                     </td>
                     <td className="px-6 py-4 text-right">
                         <button 
-                            onClick={() => handleDelete(item.id)}
+                            onClick={() => handleDeleteClick(item.id)} // <--- Ganti logic delete
                             className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                         >
                             <Trash2 size={18} />
@@ -116,6 +169,17 @@ export default function PengeluaranPage() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         onSuccess={fetchData}
+      />
+
+      {/* 5. Render Alert */}
+      <AlertModal 
+        isOpen={alertState.isOpen}
+        onClose={handleAlertClose}
+        title={alertState.title}
+        message={alertState.message}
+        type={alertState.type}
+        onConfirm={alertState.onConfirm}
+        isLoading={alertState.isLoading}
       />
     </div>
   );
