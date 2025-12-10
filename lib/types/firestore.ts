@@ -69,3 +69,18 @@ export interface GalleryItem {
   storagePath: string; // Path di storage (penting untuk hapus file nanti)
   createdAt: number;
 }
+
+// 6. COMPLAINT / ADUAN
+export type ComplaintStatus = "pending" | "processing" | "done" | "rejected";
+
+export interface Complaint {
+  id: string;
+  userId: string;         // Siapa yang lapor
+  title: string;          // Judul Laporan (misal: Lampu Jalan Mati)
+  description: string;    // Detail
+  imageUrl?: string;      // Foto bukti (opsional)
+  status: ComplaintStatus;
+  response?: string;      // Balasan dari Admin (misal: "Sudah diperbaiki")
+  createdAt: number;
+  updatedAt?: number;
+}
