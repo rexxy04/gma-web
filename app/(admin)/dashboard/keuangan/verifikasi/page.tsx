@@ -1,14 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { CheckCircle, XCircle, Eye, AlertCircle } from "lucide-react";
+import { CheckCircle, XCircle, Eye } from "lucide-react"; // Hapus AlertCircle jk tidak dipakai
 import { getPendingPayments, verifyPayment } from "@/lib/services/payment-service";
 import { getResidents } from "@/lib/services/user-service";
 import { useAuth } from "@/lib/context/AuthContext";
 import { Payment, UserProfile } from "@/lib/types/firestore";
 import Button from "@/components/ui/Button";
 import Modal from "@/components/ui/Modal";
-import Image from "next/image";
+import AlertModal, { AlertType } from "@/components/ui/AlertModal"; // 1. Import AlertModal
 
 export default function VerifikasiPage() {
   const { user: adminUser } = useAuth();
@@ -16,8 +16,23 @@ export default function VerifikasiPage() {
   const [residents, setResidents] = useState<Record<string, UserProfile>>({});
   const [isLoading, setIsLoading] = useState(true);
   
-  // State untuk Modal Bukti Transfer
+  // State Modal Bukti Transfer
   const [selectedProof, setSelectedProof] = useState<string | null>(null);
+
+  // 2. State Alert Modal
+  const [alertState, setAlertState] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    type: AlertType;
+    onConfirm?: () => void; // Jika ada isinya, muncul tombol konfirmasi
+    isLoading?: boolean;    // Loading state tombol konfirmasi
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+    type: "info",
+  });
 
   // 1. Fetch Data
   const fetchData = async () => {
@@ -30,7 +45,6 @@ export default function VerifikasiPage() {
 
       setPayments(paymentsData);
 
-      // Ubah array residents jadi object { "uid": UserProfile } biar gampang dicari
       const residentsMap: Record<string, UserProfile> = {};
       residentsData.forEach((r) => {
         residentsMap[r.uid] = r;
@@ -48,23 +62,56 @@ export default function VerifikasiPage() {
     fetchData();
   }, []);
 
-  // 2. Handle Aksi (Terima / Tolak)
-  const handleVerify = async (paymentId: string, isApproved: boolean) => {
+  // 3. Tahap 1: Munculkan Modal Konfirmasi saat tombol diklik
+  const handleVerifyClick = (paymentId: string, isApproved: boolean) => {
+    setAlertState({
+        isOpen: true,
+        title: isApproved ? "Terima Pembayaran?" : "Tolak Pembayaran?",
+        message: isApproved 
+            ? "Pastikan dana sudah masuk ke rekening kas RT. Tindakan ini tidak dapat dibatalkan."
+            : "Warga akan diminta untuk mengupload ulang bukti pembayaran.",
+        type: isApproved ? "info" : "warning",
+        onConfirm: () => processVerification(paymentId, isApproved), // Pass fungsi proses
+    });
+  };
+
+  // 4. Tahap 2: Proses Data ke Database
+  const processVerification = async (paymentId: string, isApproved: boolean) => {
     if (!adminUser) return;
-    const confirmMsg = isApproved 
-      ? "Yakin ingin MENERIMA pembayaran ini?" 
-      : "Yakin ingin MENOLAK pembayaran ini?";
     
-    if (!confirm(confirmMsg)) return;
+    // Set loading pada tombol alert
+    setAlertState(prev => ({ ...prev, isLoading: true }));
 
     try {
       await verifyPayment(paymentId, isApproved, adminUser.uid);
-      // Refresh tabel setelah update
-      fetchData();
-      alert(isApproved ? "Pembayaran DITERIMA." : "Pembayaran DITOLAK.");
+      
+      // Update Alert menjadi Sukses (Hapus onConfirm agar tombol Batal hilang)
+      setAlertState({
+        isOpen: true,
+        title: isApproved ? "Pembayaran Diterima" : "Pembayaran Ditolak",
+        message: "Status pembayaran berhasil diperbarui.",
+        type: "success",
+        onConfirm: undefined, // Penting: jadikan undefined
+        isLoading: false
+      });
+
+      // Refresh tabel
+      fetchData(); 
     } catch (error) {
-      alert("Gagal memproses data.");
+      setAlertState({
+        isOpen: true,
+        title: "Gagal Memproses",
+        message: "Terjadi kesalahan sistem saat memverifikasi data.",
+        type: "error",
+        onConfirm: undefined,
+        isLoading: false
+      });
     }
+  };
+
+  // Handler tutup alert
+  const handleAlertClose = () => {
+    setAlertState(prev => ({ ...prev, isOpen: false }));
   };
 
   return (
@@ -121,15 +168,17 @@ export default function VerifikasiPage() {
                         )}
                       </td>
                       <td className="px-6 py-4 text-right space-x-2">
+                        {/* BUTTON TOLAK */}
                         <button 
-                          onClick={() => handleVerify(p.id, false)}
+                          onClick={() => handleVerifyClick(p.id, false)}
                           className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                           title="Tolak"
                         >
                           <XCircle size={20} />
                         </button>
+                        {/* BUTTON TERIMA */}
                         <button 
-                          onClick={() => handleVerify(p.id, true)}
+                          onClick={() => handleVerifyClick(p.id, true)}
                           className="p-2 text-green-500 hover:bg-green-50 rounded-lg transition-colors"
                           title="Terima"
                         >
@@ -162,14 +211,13 @@ export default function VerifikasiPage() {
         onClose={() => setSelectedProof(null)} 
         title="Bukti Transfer"
       >
-        <div className="relative w-full h-96 bg-slate-100 rounded-lg overflow-hidden">
+        <div className="relative w-full h-96 bg-slate-100 rounded-lg overflow-hidden flex items-center justify-center">
           {selectedProof && (
-             // Gunakan unoptimized jika gambar dari URL eksternal belum di-config
-             // atau ganti component Image dengan <img /> biasa untuk proof sementara
+             // eslint-disable-next-line @next/next/no-img-element
              <img 
                src={selectedProof} 
                alt="Bukti Transfer" 
-               className="w-full h-full object-contain"
+               className="max-w-full max-h-full object-contain"
              />
           )}
         </div>
@@ -177,6 +225,17 @@ export default function VerifikasiPage() {
            <Button onClick={() => setSelectedProof(null)} variant="secondary">Tutup</Button>
         </div>
       </Modal>
+
+      {/* ALERT MODAL (KONFIRMASI & HASIL) */}
+      <AlertModal 
+        isOpen={alertState.isOpen}
+        onClose={handleAlertClose}
+        title={alertState.title}
+        message={alertState.message}
+        type={alertState.type}
+        onConfirm={alertState.onConfirm}
+        isLoading={alertState.isLoading}
+      />
 
     </div>
   );
