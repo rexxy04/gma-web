@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import Image from "next/image";
 import { UploadCloud, Trash2, Loader2, Image as ImageIcon } from "lucide-react";
 import Button from "@/components/ui/Button";
+import AlertModal, { AlertType } from "@/components/ui/AlertModal"; // 1. Import AlertModal
 import { getGalleryItems, uploadGalleryItem, deleteGalleryItem } from "@/lib/services/gallery-service";
 import { GalleryItem } from "@/lib/types/firestore";
 
@@ -11,9 +12,23 @@ export default function CMSGaleriPage() {
   const [items, setItems] = useState<GalleryItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null); // Referensi ke input file tersembunyi
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Fetch Data
+  // 2. State Alert
+  const [alertState, setAlertState] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    type: AlertType;
+    onConfirm?: () => void;
+    isLoading?: boolean;
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+    type: "info",
+  });
+
   const fetchData = async () => {
     setIsLoading(true);
     const data = await getGalleryItems();
@@ -25,42 +40,78 @@ export default function CMSGaleriPage() {
     fetchData();
   }, []);
 
-  // Handle Upload (Bisa pilih banyak file)
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
     setIsUploading(true);
     try {
-      // Upload file satu per satu secara paralel
       const uploadPromises = Array.from(files).map(file => uploadGalleryItem(file));
       await Promise.all(uploadPromises);
       
-      fetchData(); // Refresh grid setelah selesai
-      alert(`${files.length} foto berhasil diupload!`);
+      // Alert Sukses Upload
+      setAlertState({
+        isOpen: true,
+        title: "Upload Berhasil",
+        message: `${files.length} foto berhasil ditambahkan ke galeri.`,
+        type: "success"
+      });
+
+      fetchData();
     } catch (error) {
-      console.error(error);
-      alert("Gagal mengupload sebagian atau semua foto.");
+       setAlertState({
+        isOpen: true,
+        title: "Gagal Upload",
+        message: "Terjadi kesalahan saat mengupload foto.",
+        type: "error"
+      });
     } finally {
       setIsUploading(false);
-      // Reset input file agar bisa pilih file yang sama lagi jika perlu
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 
-  // Handle Delete
-  const handleDelete = async (id: string, storagePath: string) => {
-    if (!confirm("Yakin ingin menghapus foto ini secara permanen?")) return;
+  // 3. Trigger Konfirmasi Hapus
+  const handleDeleteClick = (id: string, storagePath: string) => {
+    setAlertState({
+        isOpen: true,
+        title: "Hapus Foto?",
+        message: "Foto ini akan dihapus permanen dari galeri website. Lanjutkan?",
+        type: "warning",
+        onConfirm: () => processDelete(id, storagePath),
+    });
+  };
 
+  // 4. Proses Hapus
+  const processDelete = async (id: string, storagePath: string) => {
+    setAlertState(prev => ({ ...prev, isLoading: true }));
     try {
-      // Hapus dari UI dulu biar cepat (optimistic update)
-      setItems(prev => prev.filter(item => item.id !== id));
-      // Proses hapus di backend
+      setItems(prev => prev.filter(item => item.id !== id)); // Optimistic UI
       await deleteGalleryItem(id, storagePath);
+      
+      setAlertState({
+        isOpen: true,
+        title: "Foto Dihapus",
+        message: "Foto berhasil dihapus dari galeri.",
+        type: "success",
+        onConfirm: undefined,
+        isLoading: false
+      });
     } catch (error) {
-      alert("Gagal menghapus foto.");
-      fetchData(); // Rollback jika gagal
+       setAlertState({
+        isOpen: true,
+        title: "Gagal Menghapus",
+        message: "Terjadi kesalahan sistem.",
+        type: "error",
+        onConfirm: undefined,
+        isLoading: false
+      });
+      fetchData(); // Rollback
     }
+  };
+
+  const handleAlertClose = () => {
+    setAlertState(prev => ({ ...prev, isOpen: false }));
   };
 
   return (
@@ -72,7 +123,6 @@ export default function CMSGaleriPage() {
           <p className="text-slate-500">Upload foto untuk ditampilkan di running text halaman depan.</p>
         </div>
         <div>
-          {/* Input File Tersembunyi */}
           <input 
             type="file" 
             ref={fileInputRef} 
@@ -81,7 +131,6 @@ export default function CMSGaleriPage() {
             accept="image/*" 
             className="hidden"
           />
-          {/* Tombol Pemicu */}
           <Button 
             onClick={() => fileInputRef.current?.click()} 
             leftIcon={isUploading ? <Loader2 className="animate-spin" size={18}/> : <UploadCloud size={18} />}
@@ -107,10 +156,9 @@ export default function CMSGaleriPage() {
                   className="object-cover transition-transform group-hover:scale-105"
                   sizes="(max-width: 768px) 50vw, 25vw"
                 />
-                {/* Delete Button Overlay */}
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                     <button
-                        onClick={() => handleDelete(item.id, item.storagePath)}
+                        onClick={() => handleDeleteClick(item.id, item.storagePath)} // <--- Ganti logic
                         className="p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
                         title="Hapus Foto"
                     >
@@ -126,14 +174,20 @@ export default function CMSGaleriPage() {
                 <ImageIcon size={32} className="text-slate-400" />
              </div>
              <p>Belum ada foto di galeri.</p>
-             <p className="text-sm">Klik tombol upload untuk menambahkan.</p>
           </div>
         )}
       </div>
       
-      <p className="text-sm text-slate-500 italic">
-          *Tips: Agar tampilan marquee di homepage terlihat bagus, disarankan mengupload minimal 6-8 foto dengan orientasi landscape (lebar).
-      </p>
+      {/* 5. Render Alert */}
+      <AlertModal 
+        isOpen={alertState.isOpen}
+        onClose={handleAlertClose}
+        title={alertState.title}
+        message={alertState.message}
+        type={alertState.type}
+        onConfirm={alertState.onConfirm}
+        isLoading={alertState.isLoading}
+      />
     </div>
   );
 }
