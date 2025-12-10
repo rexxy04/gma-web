@@ -1,13 +1,16 @@
-// src/components/home/Hero.tsx
 "use client";
 
 import Image from "next/image";
+import Link from "next/link"; // Import Link untuk navigasi dashboard
 import { motion } from "framer-motion";
-import Button from "@/components/ui/Button"; // Menggunakan Reusable Component
-import { useUI } from "@/lib/context/UIContext"; // Import Context
+import { LayoutDashboard } from "lucide-react"; // Import Icon Dashboard
+import Button from "@/components/ui/Button"; 
+import { useUI } from "@/lib/context/UIContext"; 
+import { useAuth } from "@/lib/context/AuthContext"; // Import Auth Context
 
 export default function Hero() {
-  const { openLoginModal } = useUI(); // Ambil fungsi buka modal
+  const { openLoginModal } = useUI(); 
+  const { user } = useAuth(); // Ambil status user login
 
   // Helper untuk scroll halus ke section aktivitas
   const handleExploreClick = () => {
@@ -19,7 +22,8 @@ export default function Hero() {
 
   return (
     <section className="relative h-screen w-full overflow-hidden flex items-center justify-center">
-      {/* 1. BACKGROUND IMAGE */}
+      
+      {/* 1. BACKGROUND IMAGE (Tetap menggunakan gambar lokal Anda) */}
       <div className="absolute inset-0 z-0">
         <Image
           src="/images/hero-bg.jpg"
@@ -59,7 +63,7 @@ export default function Hero() {
             RT 007 / RW 008
           </p>
 
-          {/* CTA BUTTONS - SUDAH DI-REFACTOR */}
+          {/* CTA BUTTONS - LOGIC DIPERBAIKI (ISSUE 5 FIX) */}
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -75,15 +79,31 @@ export default function Hero() {
                 Jelajahi
             </Button>
 
-            {/* Tombol Login (Glass Effect + Modal Trigger) */}
-            <Button 
-                variant="glass" 
-                onClick={openLoginModal}
-                size="lg"
-                className="w-full sm:w-auto"
-            >
-                Login Warga
-            </Button>
+            {/* LOGIC TOMBOL LOGIN / DASHBOARD */}
+            {user ? (
+                // JIKA SUDAH LOGIN: Tampilkan Tombol Ke Dashboard
+                <Link href={user.role === 'admin' ? "/dashboard" : "/warga"} className="w-full sm:w-auto">
+                    <Button 
+                        variant="glass" 
+                        size="lg"
+                        className="w-full flex items-center justify-center gap-2"
+                    >
+                        <LayoutDashboard size={18} />
+                        Ke Dashboard
+                    </Button>
+                </Link>
+            ) : (
+                // JIKA BELUM LOGIN: Tampilkan Tombol Login
+                <Button 
+                    variant="glass" 
+                    onClick={openLoginModal}
+                    size="lg"
+                    className="w-full sm:w-auto"
+                >
+                    Login Warga
+                </Button>
+            )}
+
           </motion.div>
         </motion.div>
       </div>

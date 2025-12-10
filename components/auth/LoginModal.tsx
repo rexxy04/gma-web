@@ -35,7 +35,6 @@ export default function LoginModal() {
     try {
       await login(email, password);
       
-      // Manual Role Check untuk redirect yang akurat
       const { getAuth } = await import("firebase/auth");
       const auth = getAuth();
       const currentUser = auth.currentUser;
@@ -60,7 +59,8 @@ export default function LoginModal() {
       }
 
     } catch (err: any) {
-      console.error("Login Error:", err.code);
+      // console.error("Login Error:", err.code); // <--- Baris ini dihapus/dikomentar agar bersih
+      
       if (err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
         setErrorMsg("Email atau password salah.");
       } else {
@@ -78,7 +78,7 @@ export default function LoginModal() {
       title="Login Akun"
     >
       {errorMsg && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-red-600 text-sm">
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2 text-red-600 text-sm animate-in fade-in slide-in-from-top-2">
             <AlertCircle size={16} />
             <span>{errorMsg}</span>
         </div>
@@ -92,7 +92,10 @@ export default function LoginModal() {
           placeholder="nama@contoh.com"
           required
           value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          onChange={(e) => {
+            setEmail(e.target.value);
+            if (errorMsg) setErrorMsg(""); // <--- Hilangkan error saat user mengetik ulang
+          }}
           icon={<Mail size={18} />}
         />
 
@@ -103,7 +106,10 @@ export default function LoginModal() {
           placeholder="••••••••"
           required
           value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          onChange={(e) => {
+            setPassword(e.target.value);
+            if (errorMsg) setErrorMsg(""); // <--- Hilangkan error saat user mengetik ulang
+          }}
           icon={<Lock size={18} />}
           rightElement={
             <button
@@ -130,7 +136,6 @@ export default function LoginModal() {
 
         <p className="text-center text-sm text-slate-500 mt-4">
           Belum punya akun?{" "}
-          {/* UPDATE: Menggunakan tag <a> agar bisa diklik ke WA */}
           <a 
             href={waLink}
             target="_blank"
