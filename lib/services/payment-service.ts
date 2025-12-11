@@ -108,18 +108,19 @@ export async function createManualPayment(data: {
 }
 
 /**
- * SUBMIT PEMBAYARAN OLEH WARGA
+ * SUBMIT PEMBAYARAN OLEH WARGA (Diupdate menjadi createPayment)
  * 1. Upload Bukti ke Storage
  * 2. Simpan Data ke Firestore (Pending)
  */
-export async function submitResidentPayment(
-  file: File, 
+export async function createPayment(
   data: {
     userId: string;
     amount: number;
     month: number;
     year: number;
-  }
+    paymentMethod: string; // Ditambahkan agar dinamis
+  },
+  file: File // Urutan parameter disesuaikan dengan PayDuesModal
 ) {
   try {
     // 1. Upload File
@@ -135,7 +136,7 @@ export async function submitResidentPayment(
       month: data.month,
       year: data.year,
       status: "pending", // Default pending agar dicek admin
-      paymentMethod: "transfer_manual",
+      paymentMethod: data.paymentMethod, // Menggunakan data dari parameter
       proofUrl: downloadUrl, // URL gambar dari storage
       createdAt: Date.now(),
     });
