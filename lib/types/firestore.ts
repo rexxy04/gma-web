@@ -95,3 +95,14 @@ export interface Expense {
   recordedBy: string; // Admin yang mencatat
   createdAt: number;
 }
+
+// 8. PAYMENT METHOD (Metode Pembayaran)
+export interface PaymentMethod {
+  id: string;
+  type: "bank" | "qris"; // Tipe metode
+  name: string;          // Nama Bank (misal: BCA, Mandiri) atau Label QRIS
+  accountNumber?: string; // No Rekening (Khusus Bank)
+  accountHolder?: string; // Atas Nama (Khusus Bank)
+  qrisImageUrl?: string;  // URL Gambar (Khusus QRIS)
+  isActive: boolean;
+}

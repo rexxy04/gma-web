@@ -13,11 +13,11 @@ import {
   Image as ImageIcon, 
   MessageSquare,
   X,
-  LogOut
+  LogOut,
+  CreditCard // <-- Pastikan ini ada
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/context/AuthContext";
-import Button from "@/components/ui/Button";
 
 // Definisi Struktur Menu
 const MENU_ITEMS = [
@@ -39,6 +39,7 @@ const MENU_ITEMS = [
       { name: "Verifikasi Iuran", href: "/dashboard/keuangan/verifikasi", icon: CheckCircle },
       { name: "Riwayat Pemasukan", href: "/dashboard/keuangan/pemasukan", icon: Wallet },
       { name: "Catat Pengeluaran", href: "/dashboard/keuangan/pengeluaran", icon: TrendingDown },
+      { name: "Metode Bayar", href: "/dashboard/keuangan/metode", icon: CreditCard }, // <-- Menu Baru
     ]
   },
   {
@@ -63,30 +64,22 @@ interface AdminSidebarProps {
 }
 
 export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
-  const pathname = usePathname(); // Untuk cek URL aktif
+  const pathname = usePathname(); 
   const router = useRouter();
   const { logout } = useAuth();
 
-
-    const handleLogout = async () => {
+  const handleLogout = async () => {
     try {
       await logout();
-      router.replace("/"); // Redirect ke Homepage (replace agar tidak bisa di-back)
+      router.replace("/"); 
     } catch (error) {
       console.error("Gagal logout:", error);
     }
   };
 
-
-
-
-
-
-
-
   return (
     <>
-      {/* MOBILE OVERLAY (Hanya muncul di mobile saat menu buka) */}
+      {/* MOBILE OVERLAY */}
       <div 
         className={cn(
           "fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-sm transition-opacity md:hidden",
@@ -125,7 +118,7 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
                     <Link
                       key={item.href}
                       href={item.href}
-                      onClick={onClose} // Tutup sidebar pas klik (di mobile)
+                      onClick={onClose} 
                       className={cn(
                         "flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
                         isActive 
@@ -142,8 +135,8 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
             </div>
           ))}
 
-          {/* LOGOUT BUTTON (Di Bawah) */}
-          <div className="pt-4 border-t border-slate-800 mt-auto">
+          {/* LOGOUT BUTTON */}
+          <div className="pt-4 border-t border-slate-800 mt-auto pb-8">
              <button 
                 onClick={handleLogout}
                 className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium text-red-400 hover:bg-red-900/20 hover:text-red-300 transition-colors"
@@ -157,4 +150,3 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
     </>
   );
 }
-
