@@ -48,7 +48,7 @@ export default function Hero() {
         >
           {/* Badge Kecil */}
           <span className="inline-block py-1 px-3 rounded-full bg-blue-600/30 border border-blue-400/30 text-blue-200 text-xs md:text-sm font-medium backdrop-blur-sm mb-2">
-            Selamat Datang Warga
+            Selamat datang di
           </span>
 
           {/* JUDUL UTAMA */}
