@@ -4,7 +4,8 @@ import { useState } from "react";
 import { Wallet, Megaphone, ArrowRight } from "lucide-react";
 import Button from "@/components/ui/Button";
 import PayDuesModal from "@/components/home/PayDuesModal";
-import ReportModal from "@/components/home/ReportModal"; // Import Modal Lapor
+import ReportModal from "@/components/home/ReportModal";
+import AlertModal, { AlertType } from "@/components/ui/AlertModal"; // 1. Import AlertModal
 import { useAuth } from "@/lib/context/AuthContext";
 import { useUI } from "@/lib/context/UIContext";
 
@@ -12,15 +13,45 @@ export default function QuickAccess() {
   const { user } = useAuth();
   const { openLoginModal } = useUI();
   
-  // State untuk kedua modal
+  // State Modal Fitur
   const [isPayModalOpen, setIsPayModalOpen] = useState(false);
   const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+
+  // 2. State Alert Modal
+  const [alertState, setAlertState] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    type: AlertType;
+    onConfirm?: () => void; // Kita pakai ini untuk trigger login
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+    type: "info",
+  });
+
+  // Helper untuk menampilkan Alert Login
+  const showLoginAlert = (featureName: string) => {
+    setAlertState({
+        isOpen: true,
+        title: "Akses Terbatas",
+        message: `Silakan login sebagai Warga terlebih dahulu untuk akses fitur ${featureName}.`,
+        type: "warning", // Tipe Warning (Kuning) agar mencolok
+        onConfirm: () => {
+            // Jika klik "Ya, Lanjutkan", tutup alert lalu buka Login
+            setAlertState(prev => ({ ...prev, isOpen: false }));
+            setTimeout(() => {
+                openLoginModal();
+            }, 300); // Delay sedikit agar transisi halus
+        }
+    });
+  };
 
   // Logic Klik Tombol Bayar
   const handlePayClick = () => {
     if (!user) {
-      alert("Silakan login sebagai Warga terlebih dahulu.");
-      openLoginModal();
+      showLoginAlert("Pembayaran Iuran");
     } else {
       setIsPayModalOpen(true);
     }
@@ -29,11 +60,15 @@ export default function QuickAccess() {
   // Logic Klik Tombol Lapor
   const handleReportClick = () => {
     if (!user) {
-      alert("Silakan login sebagai Warga terlebih dahulu.");
-      openLoginModal();
+      showLoginAlert("Lapor & Aduan");
     } else {
       setIsReportModalOpen(true);
     }
+  };
+
+  // Handler Tutup Alert
+  const handleAlertClose = () => {
+    setAlertState(prev => ({ ...prev, isOpen: false }));
   };
 
   return (
@@ -55,7 +90,6 @@ export default function QuickAccess() {
             
             {/* CARD 1: BAYAR IURAN (Theme: Blue) */}
             <div className="group relative overflow-hidden rounded-3xl bg-blue-50/50 border border-blue-100 p-8 lg:p-10 hover:shadow-2xl hover:shadow-blue-900/10 transition-all duration-300">
-                {/* Background Decoration */}
                 <div className="absolute top-0 right-0 -mt-10 -mr-10 w-64 h-64 bg-blue-100/50 rounded-full blur-3xl transition-transform group-hover:scale-110" />
                 
                 <div className="relative z-10 flex flex-col h-full items-start">
@@ -84,7 +118,6 @@ export default function QuickAccess() {
 
             {/* CARD 2: LAPOR RT (Theme: Orange) */}
             <div className="group relative overflow-hidden rounded-3xl bg-orange-50/50 border border-orange-100 p-8 lg:p-10 hover:shadow-2xl hover:shadow-orange-900/10 transition-all duration-300">
-                 {/* Background Decoration */}
                  <div className="absolute top-0 right-0 -mt-10 -mr-10 w-64 h-64 bg-orange-100/50 rounded-full blur-3xl transition-transform group-hover:scale-110" />
 
                  <div className="relative z-10 flex flex-col h-full items-start">
@@ -113,7 +146,7 @@ export default function QuickAccess() {
         </div>
       </div>
 
-      {/* RENDER MODAL DI SINI */}
+      {/* RENDER MODAL FITUR */}
       <PayDuesModal 
         isOpen={isPayModalOpen} 
         onClose={() => setIsPayModalOpen(false)} 
@@ -122,6 +155,16 @@ export default function QuickAccess() {
       <ReportModal 
         isOpen={isReportModalOpen} 
         onClose={() => setIsReportModalOpen(false)} 
+      />
+
+      {/* RENDER ALERT MODAL */}
+      <AlertModal 
+        isOpen={alertState.isOpen}
+        onClose={handleAlertClose}
+        title={alertState.title}
+        message={alertState.message}
+        type={alertState.type}
+        onConfirm={alertState.onConfirm}
       />
 
     </section>
